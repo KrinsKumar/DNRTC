@@ -1,5 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Response>
-    <Say>Hello, world!</Say>
-    <Dial>437-971-2422</Dial>
+    <Say>This demo application will repeat back what you say. Watch the console to see the media messages. Begin speaking now.</Say>
+    <Connect>
+        <Stream url="wss://<ngrok url>/streams">
+        <Parameter name="aCutomParameter" value="aCustomValue that was set in TwiML" />
+        </Stream>
+    </Connect>
+    <Say>Thank you! The WebSocket has been closed and the next TwiML verb was reached.</Say>
 </Response>
