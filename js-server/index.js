@@ -1,6 +1,5 @@
 const WebSocket = require("ws");
 const express = require("express");
-const url = require("url");
 
 // import fraud workflow
 const fraud_check_run = require("./fraud_workflow");
@@ -17,9 +16,14 @@ const speech = require("@google-cloud/speech");
 const client = new speech.SpeechClient();
 
 // set up the variables
-let inbound_transcript = "";
-let call_id = "";
-let phone_number = "";
+let callDetails = {
+  inbound_transcript: "",
+  call_id: "",
+  phone_number: "",
+  call_timestamp: "",
+  guardian: "4373440438"
+};
+let isNotFraud = True
 
 // configure Transcription Request
 const request = {
@@ -48,10 +52,11 @@ wss.on("connection", function connection(ws) {
           .on("error", console.error)
           .on("data", (data) => {
             console.log(data.results[0].alternatives[0].transcript);
-            if (data.results[0].alternatives[0].confidence > 0.3) {
+            if (data.results[0].alternatives[0].confidence > 0.3 && isNotFraud) {
               inbound_transcript += data.results[0].alternatives[0].transcript;
               console.log(inbound_transcript);
-              fraud_check_run(inbound_transcript, call_id);
+              let fraud = fraud_check_run(callDetails);
+              isNotFraud = !fraud;
             }
           });
         break;
@@ -66,8 +71,13 @@ wss.on("connection", function connection(ws) {
         break;
       case "stop":
         console.log(`Call Has Ended`);
-        inbound_transcript = "";
-        call_id = "";
+        callDetails = {
+          inbound_transcript: "",
+          call_id: "",
+          phone_number: "",
+          call_timestamp: "",
+          guardian: "4373440438"
+        }
         recognizeStream.destroy();
         break;
     }
@@ -75,12 +85,12 @@ wss.on("connection", function connection(ws) {
 });
 
 //Handle HTTP Request
-app.get("/", (req, res) => res.send(inbound_transcript));
+app.get("/", (req, res) => res.send(callDetails.inbound_transcript));
 
 app.post("/", (req, res) => {
   res.set("Content-Type", "text/xml");
-  if (!phone_number) {
-    phone_number = "437-971-2422";
+  if (!callDetails.phone_number) {
+    callDetails.phone_number = "437-971-2422";
   }
 
   res.send(`
@@ -88,15 +98,16 @@ app.post("/", (req, res) => {
       <Start>
         <Stream url="wss://${req.headers.host}/" statusCallback="https://${req.headers.host}/call"/>
       </Start>
-      <Dial>${phone_number}</Dial>
+      <Dial>${callDetails.phone_number}</Dial>
       <Pause length="60" />
     </Response>
   `);
 });
 
 app.post("/call", (req, res) => {
-  const { CallSid } = req.body;
-  call_id = CallSid;
+  const { CallSid, Timestamp } = req.body;
+  callDetails.call_id = CallSid;
+  callDetails.call_timestamp = Timestamp;
   res.sendStatus(200);
 });
 

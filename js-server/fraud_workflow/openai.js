@@ -1,7 +1,10 @@
 const { OpenAI } = require("openai");
 const openai = new OpenAI();
 
-async function detectCallIntent(inbound_transcript) {
+async function detectCallIntent(inbound_transcript, call_timestamp) {
+  const adjustedTimestamp = new Date(call_timestamp);
+  adjustedTimestamp.setHours(adjustedTimestamp.getHours() - 5);
+  const call_timestamp = adjustedTimestamp.toISOString();
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
@@ -17,6 +20,8 @@ async function detectCallIntent(inbound_transcript) {
       }  
       - "scam_detected": Set to "true" if the call appears to be a scam; otherwise, set to "false".  
       - "scam_text": Provide the exact portion of the transcript that indicates fraudulent or suspicious behavior.  
+      - "explaination": Give a past tense expalination of the repot that the user will hear back, Here is the time stamps of the call: ${call_timestamp}.
+      Example explaination: "At 2:30 PM, we detected a scam call where the scammer tried to obtain the user's personal information by pretending to be a bank representative."
       
       Ensure high accuracy in detecting scams while minimizing false positives.`,
       },
