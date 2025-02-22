@@ -1,5 +1,6 @@
 "use strict";
-require('dotenv').load();
+const dotenv = require('dotenv');
+dotenv.config();
 
 const fs = require('fs');
 const path = require('path');
@@ -31,10 +32,10 @@ function handleRequest(request, response){
   }
 }
 
-dispatcher.onPost('/twiml', function(req,res) {
+dispatcher.onGet('/', function(req,res) {
   log('POST TwiML');
 
-  var filePath = path.join(__dirname+'/templates', 'streams.xml');
+  var filePath = path.join(__dirname+'/../twilio-config', 'streams.xml');
   var stat = fs.statSync(filePath);
 
   res.writeHead(200, {
@@ -50,6 +51,13 @@ mediaws.on('connect', function(connection) {
   log('Media WS: Connection accepted');
   new MediaStreamHandler(connection);
 });
+
+dispatcher.onPost('/', function(req,res) {
+  console.log('POST /');
+  console.log(req.body);
+  res.writeHead(200, {'Content-Type': 'text/xml'});
+  res.end();
+})
 
 class MediaStreamHandler {
   constructor(connection) {
@@ -69,14 +77,14 @@ class MediaStreamHandler {
         return;
       }
       const track = data.media.track;
-      // if (this.trackHandlers[track] === undefined) {
-      //   // const service = new TranscriptionService();
-      //   // service.on('transcription', (transcription) => {
-      //   //   log(`Transcription (${track}): ${transcription}`);
-      //   // });
-      //   // this.trackHandlers[track] = service;
-      // }
-      // this.trackHandlers[track].send(data.media.payload);
+      if (this.trackHandlers[track] === undefined) {
+        const service = new TranscriptionService();
+        service.on('transcription', (transcription) => {
+          log(`Transcription (${track}): ${transcription}`);
+        });
+        this.trackHandlers[track] = service;
+      }
+      this.trackHandlers[track].send(data.media.payload);
     } else if (message.type === 'binary') {
       log('Media WS: binary message received (not supported)');
     }
