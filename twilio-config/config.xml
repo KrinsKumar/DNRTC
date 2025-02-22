@@ -2,8 +2,8 @@
 <Response>
     <Say>This demo application will repeat back what you say. Watch the console to see the media messages. Begin speaking now.</Say>
     <Connect>
-        <Stream url="wss://<ngrok url>/streams">
-        <Parameter name="aCutomParameter" value="aCustomValue that was set in TwiML" />
+        <Stream url="wss://61be-216-249-49-2.ngrok-free.app/streams">
+            <Parameter name="aCutomParameter" value="aCustomValue that was set in TwiML" />
         </Stream>
     </Connect>
     <Say>Thank you! The WebSocket has been closed and the next TwiML verb was reached.</Say>
