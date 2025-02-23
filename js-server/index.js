@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 
 // import fraud workflow
-const fraud_check_run = require("./fraud_workflow");
+const {fraud_check_run, getResponseObject, setResponseObject, resetFlag} = require("./fraud_workflow");
 
 // set up the server
 const app = express();
@@ -15,6 +15,7 @@ const wss = new WebSocket.Server({ server });
 
 // set up Google Speech to Text
 const speech = require("@google-cloud/speech");
+const { get } = require("http");
 const client = new speech.SpeechClient();
 
 // set up the variables
@@ -25,6 +26,7 @@ let callDetails = {
   call_timestamp: "",
   guardian: "4373440438",
   name: "Omar",
+  my_phone: ""
 };
 
 // configure Transcription Request
@@ -53,7 +55,6 @@ wss.on("connection", function connection(ws) {
           .streamingRecognize(request)
           .on("error", console.error)
           .on("data", async (data) => {
-            console.log(data.results[0].alternatives[0].transcript);
             if (data.results[0].alternatives[0].confidence > 0.3) {
               callDetails.inbound_transcript += data.results[0].alternatives[0].transcript;
               console.log(callDetails.inbound_transcript);
@@ -72,14 +73,12 @@ wss.on("connection", function connection(ws) {
         break;
       case "stop":
         console.log(`Call Has Ended`);
-        callDetails = {
-          inbound_transcript: "",
-          call_id: "",
-          phone_number: "",
-          call_timestamp: "",
-          guardian: "4373440438"
-        }
+        callDetails.inbound_transcript = "";
+        callDetails.call_id = "";
+        callDetails.call_timestamp = "";
+        console.log(callDetails);
         recognizeStream.destroy();
+        resetFlag();
         break;
     }
   });
@@ -110,11 +109,22 @@ app.post("/call", (req, res) => {
 
 app.post("/info", (req, res) => {
   const body = req.body;
-  callDetails.phone_number = body.phone.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+  callDetails.my_phone = body.phone.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
   callDetails.name = body.name;
   callDetails.guardian = body.guardian;
   console.log(callDetails);
   res.sendStatus(200);
+});
+
+
+app.get('/status', (req, res) => {
+  let response = getResponseObject();
+  let new_response = {
+    explaination: response.explaination,
+    timeStamp: response.timeStamp
+  }
+  setResponseObject("", "");
+  res.send(new_response);
 });
 
 console.log("Listening at Port 8080");
