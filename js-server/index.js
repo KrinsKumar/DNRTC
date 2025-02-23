@@ -1,11 +1,13 @@
 const WebSocket = require("ws");
 const express = require("express");
+const cors = require("cors");
 
 // import fraud workflow
 const fraud_check_run = require("./fraud_workflow");
 
 // set up the server
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const server = require("http").createServer(app);
@@ -19,11 +21,11 @@ const client = new speech.SpeechClient();
 let callDetails = {
   inbound_transcript: "",
   call_id: "",
-  phone_number: "",
+  phone_number: "437-971-2422",
   call_timestamp: "",
-  guardian: "4373440438"
+  guardian: "4373440438",
+  name: "Omar",
 };
-let isNotFraud = True
 
 // configure Transcription Request
 const request = {
@@ -50,13 +52,12 @@ wss.on("connection", function connection(ws) {
         recognizeStream = client
           .streamingRecognize(request)
           .on("error", console.error)
-          .on("data", (data) => {
+          .on("data", async (data) => {
             console.log(data.results[0].alternatives[0].transcript);
-            if (data.results[0].alternatives[0].confidence > 0.3 && isNotFraud) {
-              inbound_transcript += data.results[0].alternatives[0].transcript;
-              console.log(inbound_transcript);
-              let fraud = fraud_check_run(callDetails);
-              isNotFraud = !fraud;
+            if (data.results[0].alternatives[0].confidence > 0.3) {
+              callDetails.inbound_transcript += data.results[0].alternatives[0].transcript;
+              console.log(callDetails.inbound_transcript);
+              fraud_check_run(callDetails);
             }
           });
         break;
@@ -89,14 +90,10 @@ app.get("/", (req, res) => res.send(callDetails.inbound_transcript));
 
 app.post("/", (req, res) => {
   res.set("Content-Type", "text/xml");
-  if (!callDetails.phone_number) {
-    callDetails.phone_number = "437-971-2422";
-  }
-
   res.send(`
     <Response>
       <Start>
-        <Stream url="wss://${req.headers.host}/" statusCallback="https://${req.headers.host}/call"/>
+        <Stream url="wss://${req.headers.host}/" statusCallback="https://${req.headers.host}/call" track="outbound_track"/>
       </Start>
       <Dial>${callDetails.phone_number}</Dial>
       <Pause length="60" />
@@ -108,6 +105,15 @@ app.post("/call", (req, res) => {
   const { CallSid, Timestamp } = req.body;
   callDetails.call_id = CallSid;
   callDetails.call_timestamp = Timestamp;
+  res.sendStatus(200);
+});
+
+app.post("/info", (req, res) => {
+  const body = req.body;
+  callDetails.phone_number = body.phone.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+  callDetails.name = body.name;
+  callDetails.guardian = body.guardian;
+  console.log(callDetails);
   res.sendStatus(200);
 });
 
