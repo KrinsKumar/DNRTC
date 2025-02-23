@@ -1,5 +1,6 @@
 
 // import my functions
+const { response } = require("express");
 const detectCallIntent = require("./openai");
 const { handUpCall, createCall, updateCall} = require("./twilio");
 
@@ -10,17 +11,15 @@ async function fraud_check_run(callDetails) {
     return;
   }
   const adjustedTimestamp = new Date(callDetails.call_timestamp);
-  adjustedTimestamp.setHours(adjustedTimestamp.getHours() - 5);
-  console.log(adjustedTimestamp);
   console.log(adjustedTimestamp.toTimeString().split(' ')[0].slice(0, 5));
-  callDetails.call_timestamp = adjustedTimestamp.toTimeString().split(' ')[0].slice(0, 5);
+  let smaller_stamp = adjustedTimestamp.toTimeString().split(' ')[0].slice(0, 5);
   console.log(callDetails.call_timestamp);
-  detectCallIntent(callDetails.inbound_transcript, callDetails.call_timestamp, callDetails.name).then((response) => {
+  detectCallIntent(callDetails.inbound_transcript, smaller_stamp, callDetails.name).then((response) => {
     console.log(response);
     if (response.scam_detected) {
       isFraud = true;
       handleFraud(callDetails, response.explanation);
-      setResponseObject(response.explanation, callDetails.call_timestamp);
+      setResponseObject(response.explanation, callDetails.call_timestamp, callDetails.phone_number);
     }
   });
 }
@@ -28,15 +27,21 @@ async function fraud_check_run(callDetails) {
 let response_object = {
   explaination: "",
   timeStamp: "",
+  number: "",
 };
 
 function getResponseObject() {
   return response_object;
 }
 
-function setResponseObject(explaination, timeStamp) {
+function setResponseObject(explaination, timeStamp, phone_number) {
+  if (timeStamp !== "") {
+    const date = new Date(timeStamp);
+    timeStamp = date.toISOString().split('T')[0];
+  }
   response_object.explaination = explaination;
   response_object.timeStamp = timeStamp;
+  response_object.number = phone_number;
 }
 
 async function handleFraud(callDetails, content) {

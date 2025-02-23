@@ -20,8 +20,24 @@ This ensures your loved ones stay protected without compromising their independe
 
 
 ## 🛠️ Try It Yourself!  
-1️⃣ **Get a Twilio Account** – Sign up and purchase a phone number (costs less than $2).  
-2️⃣ **Run the Frontend** – Use the form on the homepage to set up your backend.  
-3️⃣ **You're Set!** – All incoming calls are now monitored and protected.  
+1. **Get a Twilio Account** – Sign up and purchase a phone number (costs less than $2). Once you get the twilio account run the following bash command with the correct values:
+```bash
+export TWILIO_ACCOUNT_SID=AC...
+export TWILIO_AUTH_TOKEN=36...
+```
+2. **Run the Frontend** – Run the front end and the backend. Using the front end fill out the fields in the form to populate the values in the backend. 
+```bash
+# front end
+cd next-frontend
+npm i
+npm run dev
+```
+```bash
+# back end
+cd js-server
+npm i
+npm run start
+```
+3. **You're Set!** – You should have a new phone number from twilio, use that phone number from now onwards. This phone number will act as a mask for your real phone number. All the calls to this phone number will be redirected to you as it was your number which it is!!.
 
 **BOOM!** No more scam calls slipping through! 🎉  

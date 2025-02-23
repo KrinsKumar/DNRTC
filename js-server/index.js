@@ -121,9 +121,10 @@ app.get('/status', (req, res) => {
   let response = getResponseObject();
   let new_response = {
     explaination: response.explaination,
-    timeStamp: response.timeStamp
+    date: response.timeStamp,
+    number: response.number
   }
-  setResponseObject("", "");
+  setResponseObject("", "", "");
   res.send(new_response);
 });
 

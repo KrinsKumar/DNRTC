@@ -3,14 +3,18 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useRouter } from "next/navigation"
 import { Label } from "@/components/ui/label";
 
 export function PhoneForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [guardianPhone, setGuardianPhone] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter()
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    setIsLoading(true);
     event.preventDefault();
     console.log("name", name);
     console.log("phone", phone);
@@ -28,13 +32,14 @@ export function PhoneForm() {
       },
       body: JSON.stringify(body),
     })
-      .then((response) => response.json())
       .then((data) => {
         console.log("Success:", data);
       })
       .catch((error) => {
         console.error("Error:", error);
       });
+
+      router.push("/calls")
   }
 
   return (
@@ -64,7 +69,7 @@ export function PhoneForm() {
         />
       </div>
       <Button onClick={handleClick} className="w-full">
-        Submit
+        {isLoading ? "Loading..." : "Submit"}
       </Button>
     </form>
   );
