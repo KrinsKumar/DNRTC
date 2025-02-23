@@ -30,6 +30,15 @@ export function CallDialog({ call, onClose }) {
             <ScrollArea className="h-[100px] rounded-md border p-4">
               <p className="text-sm text-muted-foreground">{call.explaination}</p>
             </ScrollArea>
+            {call.remediation && (
+              <div>
+                <h4 className="mb-2 text-sm font-medium flex items-center  mt-4">
+                  <Info className="h-4 w-4 mr-2" />
+                  Remediation
+                </h4>
+                    <div className="text-sm text-muted-foreground mx-4" dangerouslySetInnerHTML={{ __html: call.remediation }} />
+              </div>
+            )}
           </div>
           <div className="flex justify-between">
             <Button variant="outline" onClick={onClose}>

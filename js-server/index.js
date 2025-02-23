@@ -3,7 +3,13 @@ const express = require("express");
 const cors = require("cors");
 
 // import fraud workflow
-const {fraud_check_run, getResponseObject, setResponseObject, resetFlag} = require("./fraud_workflow");
+const {
+  fraud_check_run,
+  getResponseObject,
+  setResponseObject,
+  resetFlag,
+} = require("./fraud_workflow");
+const { getFixes } = require("./fraud_workflow/openai");
 
 // set up the server
 const app = express();
@@ -22,11 +28,11 @@ const client = new speech.SpeechClient();
 let callDetails = {
   inbound_transcript: "",
   call_id: "",
-  phone_number: "437-971-2422",
+  phone_number: "647-580-7441",
   call_timestamp: "",
-  guardian: "4373440438",
+  guardian: "",
   name: "Omar",
-  my_phone: ""
+  my_phone: "",
 };
 
 // configure Transcription Request
@@ -56,7 +62,8 @@ wss.on("connection", function connection(ws) {
           .on("error", console.error)
           .on("data", async (data) => {
             if (data.results[0].alternatives[0].confidence > 0.3) {
-              callDetails.inbound_transcript += data.results[0].alternatives[0].transcript;
+              callDetails.inbound_transcript +=
+                data.results[0].alternatives[0].transcript;
               console.log(callDetails.inbound_transcript);
               fraud_check_run(callDetails);
             }
@@ -109,20 +116,33 @@ app.post("/call", (req, res) => {
 
 app.post("/info", (req, res) => {
   const body = req.body;
-  callDetails.my_phone = body.phone.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+  if (body.phone !== "") {
+    callDetails.my_phone = body.phone.replace(
+      /(\d{3})(\d{3})(\d{4})/,
+      "$1-$2-$3"
+    );
+  } else {
+    callDetails.my_phone = "437-971-2422"
+  }
   callDetails.name = body.name;
-  callDetails.guardian = body.guardian;
+  if (body.guardian !== "") {
+    callDetails.guardian = body.guardian;
+  } else {
+    callDetails.guardian = "4373440438"
+  }
   console.log(callDetails);
   res.sendStatus(200);
 });
 
-
-app.get('/status', (req, res) => {
+app.get("/status", async (req, res) => {
   let response = getResponseObject();
   let new_response = {
     explaination: response.explaination,
     date: response.timeStamp,
-    number: response.number
+    number: response.number,
+  };
+  if (response.explaination !== "") {
+    new_response.remediation = await getFixes(response.explaination);
   }
   setResponseObject("", "", "");
   res.send(new_response);

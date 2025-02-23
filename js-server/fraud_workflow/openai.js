@@ -36,4 +36,31 @@ async function detectCallIntent(inbound_transcript, call_timestamp, name) {
   return JSON.parse(completion.choices[0].message.content);
 }
 
-module.exports = detectCallIntent;
+async function getFixes(content) {
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `You are an AI designed to get the scam incident reporst. Your job is to provide remidation steps to the user. 
+        , return in JSON {remediation: string} only return in JSON and nothing else add <br> where the points are breaking`,
+
+      },
+      {
+        role: "user",
+        content: content,
+      },
+    ],
+    store: true,
+  });
+  const responseContent = completion.choices[0].message.content;
+  if (responseContent.startsWith("```json")) {
+    completion.choices[0].message.content = responseContent.slice(7, -3).trim();
+  }
+  let json_response = JSON.parse(completion.choices[0].message.content);
+  console.log(json_response);
+  console.log(json_response.remediation);
+  return json_response.remediation;
+}
+
+module.exports = {detectCallIntent, getFixes};
