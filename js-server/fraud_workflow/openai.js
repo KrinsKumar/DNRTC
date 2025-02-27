@@ -58,8 +58,6 @@ async function getFixes(content) {
     completion.choices[0].message.content = responseContent.slice(7, -3).trim();
   }
   let json_response = JSON.parse(completion.choices[0].message.content);
-  console.log(json_response);
-  console.log(json_response.remediation);
   return json_response.remediation;
 }
 

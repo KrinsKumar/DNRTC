@@ -2,6 +2,7 @@
   "dependencies": {
     "@google-cloud/speech": "^6.7.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "openai": "^4.85.3",
     "twilio": "^5.4.5",
